@@ -6,26 +6,31 @@ import androidx.room.PrimaryKey;
 
 @Entity
 public class Song {
-    @PrimaryKey(autoGenerate = true)
-    private int songID;
-
+    @PrimaryKey
+    private long songID;
     private String songName;
     private String songAlbum;
     private String songArtist;
+    private String songLastModified;
     private final String songPath;
+    //private final String songDuration;
 
-    public Song(String songName, String songAlbum, String songArtist, @NonNull String songPath) {
+
+    public Song(long songID, String songName, String songAlbum, String songArtist, String songLastModified, @NonNull String songPath) {
+        this.songID = songID;
         this.songName = songName;
         this.songAlbum = songAlbum;
         this.songArtist = songArtist;
+        this.songLastModified = songLastModified;
         this.songPath = songPath;
+        //this.songDuration = songDuration;
     }
 
-    public int getSongID() {
+    public long getSongID() {
         return songID;
     }
 
-    public void setSongID(int songID) {
+    public void setSongID(long songID) {
         this.songID = songID;
     }
 
@@ -56,4 +61,19 @@ public class Song {
     public String getSongPath() {
         return songPath;
     }
+
+    public String getSongLastModified() {
+        return songLastModified;
+    }
+
+    public void setSongLastModified(String songLastModified) {
+        this.songLastModified = songLastModified;
+    }
+    /*
+
+    public String getSongDuration() {
+        return songDuration;
+    }
+
+     */
 }

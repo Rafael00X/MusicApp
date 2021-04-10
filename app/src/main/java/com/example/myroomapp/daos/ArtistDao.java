@@ -7,6 +7,7 @@ import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
 import androidx.room.Transaction;
 
+import com.example.myroomapp.entities.Album;
 import com.example.myroomapp.entities.Artist;
 import com.example.myroomapp.entities.relations.ArtistWithSongs;
 
@@ -23,4 +24,8 @@ public interface ArtistDao {
     @Transaction
     @Query("SELECT * FROM artist WHERE artistName = :artistName")
     List<ArtistWithSongs> getArtistWithSongs(String artistName);
+
+    @Transaction
+    @Query("SELECT * FROM artist")
+    List<Artist> getAllArtists();
 }

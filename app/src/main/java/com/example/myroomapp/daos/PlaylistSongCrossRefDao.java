@@ -4,9 +4,10 @@ import androidx.room.Dao;
 import androidx.room.Delete;
 import androidx.room.Insert;
 import androidx.room.OnConflictStrategy;
+import androidx.room.Query;
 
-import com.example.myroomapp.entities.Artist;
-import com.example.myroomapp.entities.relations.PlaylistSongCrossRef;
+import com.example.myroomapp.entities.Playlist;
+import com.example.myroomapp.entities.PlaylistSongCrossRef;
 
 @Dao
 public interface PlaylistSongCrossRefDao {
@@ -15,4 +16,13 @@ public interface PlaylistSongCrossRefDao {
 
     @Delete
     void delete(PlaylistSongCrossRef playlistSongCrossRef);
+
+    @Query("DELETE FROM playlistsongcrossref WHERE playlistID = :playlistID")
+    void deletePlaylist(int playlistID);
+
+    @Query("DELETE FROM playlistsongcrossref WHERE songID = :songID")
+    void deleteSong(long songID);
+
+    @Query("DELETE FROM playlistsongcrossref WHERE songID = :songID AND playlistID = :playlistID")
+    void deleteSongFromPlaylist(long songID, int playlistID);
 }

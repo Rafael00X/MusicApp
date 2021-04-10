@@ -1,88 +1,210 @@
 package com.example.myroomapp;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
+import android.Manifest;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.util.Log;
-import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.content.res.AppCompatResources;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.example.myroomapp.entities.Album;
 import com.example.myroomapp.entities.Artist;
 import com.example.myroomapp.entities.Playlist;
-import com.example.myroomapp.entities.Song;
-import com.example.myroomapp.entities.relations.AlbumWithSongs;
-import com.example.myroomapp.entities.relations.ArtistWithSongs;
-import com.example.myroomapp.entities.relations.PlaylistSongCrossRef;
-import com.example.myroomapp.entities.relations.PlaylistWithSongs;
-import com.example.myroomapp.entities.relations.SongWithPlaylists;
+import com.example.myroomapp.fragments.NavigationDrawerFragment;
+import com.example.myroomapp.fragments.PlayerFragment;
+import com.example.myroomapp.fragments.Song2Fragment;
+import com.karumi.dexter.Dexter;
+import com.karumi.dexter.PermissionToken;
+import com.karumi.dexter.listener.PermissionDeniedResponse;
+import com.karumi.dexter.listener.PermissionGrantedResponse;
+import com.karumi.dexter.listener.PermissionRequest;
+import com.karumi.dexter.listener.single.PermissionListener;
 
-import java.util.ArrayList;
-import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
-    TextView textView1, textView2;
-    List<SongWithPlaylists> dataList;
-    SongWithPlaylists data;
+    ItemViewModel itemViewModel;
+    Functions myFunctions;
+    Player player;
+    MusicDatabase db;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        MusicDatabase db = MusicDatabase.getInstance(this);
+        myFunctions = new Functions();
+        player = new Player();
+        itemViewModel = new ViewModelProvider(this).get(ItemViewModel.class);
 
-        List<Song> songs = new ArrayList<Song>();
-        songs.add(new Song("You Belong With Me", "Fearless", "Taylor Swift", "A"));
-        songs.add(new Song("Love Story", "Fearless", "Taylor Swift", "B"));
-        songs.add(new Song("Endgame", "Reputation", "Taylor Swift", "C"));
-        songs.add(new Song("Dangerous", "NA", "Deamn", "D"));
+        Dexter.withContext(this)
+                .withPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
+                .withListener(new PermissionListener() {
 
-        List<Album> albums = new ArrayList<Album>();
-        albums.add(new Album("Fearless"));
-        albums.add(new Album("Reputation"));
-        albums.add(new Album("NA"));
+                    @Override
+                    public void onPermissionGranted(PermissionGrantedResponse permissionGrantedResponse) {
+                        Toast.makeText(MainActivity.this, "Permission received", Toast.LENGTH_SHORT).show();
+                        player.create(MainActivity.this);
+                        //itemViewModel.loadData();
 
-        List<Artist> artists = new ArrayList<Artist>();
-        artists.add(new Artist("Taylor Swift"));
-        artists.add(new Artist("Deamn"));
+                        /*
 
-        List<Playlist> playlists = new ArrayList<Playlist>();
-        playlists.add(new Playlist("MyPlaylist1"));
-        playlists.add(new Playlist("MyPlaylist2"));
+                        db = MusicDatabase.getInstance(MainActivity.this);
+                        ArrayList<Song> songs = myFunctions.fetchSongs(MainActivity.this);
+                        if (songs != null) {
+                            for (Song song : songs) {
+                                db.songDao().insert(song);
+                                db.albumDao().insert(new Album(song.getSongAlbum()));
+                                db.artistDao().insert(new Artist(song.getSongArtist()));
+                            }
+                        }
 
-        List<PlaylistSongCrossRef> playlistSongCrossRefs = new ArrayList<PlaylistSongCrossRef>();
-        playlistSongCrossRefs.add(new PlaylistSongCrossRef(1, "MyPlaylist1"));
-        playlistSongCrossRefs.add(new PlaylistSongCrossRef(2, "MyPlaylist1"));
-        playlistSongCrossRefs.add(new PlaylistSongCrossRef(1, "MyPlaylist2"));
+                         */
 
 
-        //db.songDao().deleteAll();
 
-        //for (int i = 0; i < songs.size(); i++)
-            //db.songDao().insert(songs.get(i));
-        for (int i = 0; i < albums.size(); i++)
-            db.albumDao().insert(albums.get(i));
-        for (int i = 0; i < artists.size(); i++)
-            db.artistDao().insert(artists.get(i));
-        for (int i = 0; i < playlists.size(); i++)
-            db.playlistDao().insert(playlists.get(i));
-        for (int i = 0; i < playlists.size(); i++)
-            db.playlistDao().insert(playlists.get(i));
-        for (int i = 0; i < playlistSongCrossRefs.size(); i++)
-            db.playlistSongCrossRefDao().insert(playlistSongCrossRefs.get(i));
 
-        dataList = db.songDao().getSongWithPlaylists(1);
-        if (dataList.size() > 0) {
-            data = dataList.get(0);
-            String TAG = "MyActivity";
-            Log.d(TAG, "Number of playlists = " + data.playlists.size());
-            for (int i = 0; i < data.playlists.size(); i++) {
-                Log.d(TAG, "Playlist name = " + data.playlists.get(i).getPlaylistName());
-            }
-        }
-        Toast.makeText(this, "Done", Toast.LENGTH_LONG).show();
+                        NavigationDrawerFragment navigationDrawerFragment = new NavigationDrawerFragment(MainActivity.this);
+                        FragmentManager fragmentManager = getSupportFragmentManager();
+                        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+                        fragmentTransaction.add(R.id.main_fragment_container_view, navigationDrawerFragment);
+                        fragmentTransaction.addToBackStack(null);
+                        fragmentTransaction.commit();
+
+
+                        itemViewModel.getLoadFragment().observe(MainActivity.this, s -> {
+                            Song2Fragment song2Fragment;
+                            PlayerFragment playerFragment;
+                            FragmentTransaction transaction;
+                            Drawable drawable;
+                            switch (s) {
+                                case Constants.FRAGMENT_PLAYER:
+                                    playerFragment = new PlayerFragment(MainActivity.this, player);
+                                    transaction = getSupportFragmentManager().beginTransaction();
+                                    transaction.setCustomAnimations(
+                                            R.anim.bottom_to_top_slide_enter,
+                                            R.anim.fade_out,
+                                            R.anim.fade_in,
+                                            R.anim.top_to_bottom_exit);
+                                    transaction.replace(R.id.main_fragment_container_view, playerFragment);
+                                    transaction.addToBackStack(null);
+                                    transaction.commit();
+                                    break;
+
+                                case Constants.FRAGMENT_SONG_FROM_ALBUM:
+                                    Album album = itemViewModel.getAlbum();
+                                    drawable = AppCompatResources.getDrawable(MainActivity.this, R.drawable.album_cover);
+                                    song2Fragment = new Song2Fragment(MainActivity.this, itemViewModel.getSongsOfAlbum(album), drawable, album.getAlbumName());
+                                    transaction = getSupportFragmentManager().beginTransaction();
+                                    transaction.setCustomAnimations(
+                                            R.anim.right_to_left_slide_enter,
+                                            R.anim.right_to_left_slide_exit,
+                                            R.anim.left_to_right_slide_enter,
+                                            R.anim.left_to_right_slide_exit);
+
+                                    transaction.replace(R.id.main_fragment_container_view, song2Fragment);
+                                    transaction.addToBackStack(null);
+                                    transaction.commit();
+                                    break;
+
+                                case Constants.FRAGMENT_SONG_FROM_ARTIST:
+                                    Artist artist = itemViewModel.getArtist();
+                                    drawable = AppCompatResources.getDrawable(MainActivity.this, R.drawable.artist_cover);
+                                    song2Fragment = new Song2Fragment(MainActivity.this, itemViewModel.getSongsOfArtist(artist), drawable, artist.getArtistName());
+                                    transaction = getSupportFragmentManager().beginTransaction();
+                                    transaction.setCustomAnimations(
+                                            R.anim.right_to_left_slide_enter,
+                                            R.anim.right_to_left_slide_exit,
+                                            R.anim.left_to_right_slide_enter,
+                                            R.anim.left_to_right_slide_exit);
+                                    transaction.replace(R.id.main_fragment_container_view, song2Fragment);
+                                    transaction.addToBackStack(null);
+                                    transaction.commit();
+                                    break;
+
+                                case Constants.FRAGMENT_SONG_FROM_PLAYLIST:
+                                    Playlist playlist = itemViewModel.getPlaylist();
+                                    drawable = AppCompatResources.getDrawable(MainActivity.this, R.drawable.playlist_cover);
+                                    song2Fragment = new Song2Fragment(MainActivity.this, itemViewModel.getSongsOfPlaylist(playlist), drawable, playlist.getPlaylistName());
+                                    transaction = getSupportFragmentManager().beginTransaction();
+                                    transaction.setCustomAnimations(
+                                            R.anim.right_to_left_slide_enter,
+                                            R.anim.right_to_left_slide_exit,
+                                            R.anim.left_to_right_slide_enter,
+                                            R.anim.left_to_right_slide_exit);
+                                    transaction.replace(R.id.main_fragment_container_view, song2Fragment);
+                                    transaction.addToBackStack(null);
+                                    transaction.commit();
+                                    break;
+
+                            }
+                        });
+
+                        itemViewModel.getPlayerTask().observe(MainActivity.this, s -> {
+                            if (player.isFirstSongSelected()) {
+                                switch (s) {
+                                    case Constants.PLAYER_START:
+                                        player.start();
+                                        break;
+                                    case Constants.PLAYER_PLAY_PAUSE:
+                                        if (player.isPlaying()) itemViewModel.setPlayerTask(Constants.PLAYER_PAUSE);
+                                        else itemViewModel.setPlayerTask(Constants.PLAYER_PLAY);
+                                        break;
+
+                                    case Constants.PLAYER_PLAY:
+                                        player.resume();
+                                        break;
+
+                                    case Constants.PLAYER_PAUSE:
+                                        player.pause();
+                                        break;
+
+                                    case Constants.PLAYER_NEXT:
+                                        player.next();
+                                        itemViewModel.setPlayerTask(Constants.PLAYER_PREPARE);
+                                        break;
+
+                                    case Constants.PLAYER_PREVIOUS:
+                                        player.previous();
+                                        itemViewModel.setPlayerTask(Constants.PLAYER_PREPARE);
+                                        break;
+                                }
+                            }
+
+                            if (s.equals(Constants.PLAYER_PREPARE)) {
+                                // TODO - prevent redundant reload
+                                player.setQueue(itemViewModel.getQueue());
+                                player.setSongPosition(itemViewModel.getSongPosition());
+                                player.prepare();
+
+                            }
+                        });
+                    }
+
+
+
+                    @Override
+                    public void onPermissionDenied(PermissionDeniedResponse permissionDeniedResponse) {
+                        // TODO
+                        Toast.makeText(MainActivity.this, "Permission denied. Unable to access media files.", Toast.LENGTH_LONG).show();
+                    }
+
+                    @Override
+                    public void onPermissionRationaleShouldBeShown(PermissionRequest permissionRequest, PermissionToken permissionToken) {
+                        permissionToken.continuePermissionRequest();
+                    }
+                })
+                .check();
+    }
+
+    @Override
+    protected void onDestroy() {
+        player.destroy();
+        player = null;
+        super.onDestroy();
     }
 }

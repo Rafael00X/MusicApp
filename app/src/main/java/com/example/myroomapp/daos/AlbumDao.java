@@ -8,6 +8,7 @@ import androidx.room.Query;
 import androidx.room.Transaction;
 
 import com.example.myroomapp.entities.Album;
+import com.example.myroomapp.entities.Song;
 import com.example.myroomapp.entities.relations.AlbumWithSongs;
 
 import java.util.List;
@@ -23,4 +24,8 @@ public interface AlbumDao {
     @Transaction
     @Query("SELECT * FROM album WHERE albumName = :albumName")
     List<AlbumWithSongs> getAlbumWithSongs(String albumName);
+
+    @Transaction
+    @Query("SELECT * FROM album")
+    List<Album> getAllAlbums();
 }

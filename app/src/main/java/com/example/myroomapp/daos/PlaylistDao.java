@@ -23,6 +23,10 @@ public interface PlaylistDao {
     void delete(Playlist playlist);
 
     @Transaction
-    @Query("SELECT * FROM playlist WHERE playlistName = :playlistName")
-    List<PlaylistWithSongs> getPlaylistWithSongs(String playlistName);
+    @Query("SELECT * FROM playlist WHERE playlistID = :playlistID")
+    List<PlaylistWithSongs> getPlaylistWithSongs(int playlistID);
+
+    @Transaction
+    @Query("SELECT * FROM playlist")
+    List<Playlist> getAllPlaylists();
 }

@@ -6,16 +6,28 @@ import androidx.room.PrimaryKey;
 
 @Entity
 public class Playlist {
-    @NonNull
-    @PrimaryKey
-    private final String playlistName;
+    @PrimaryKey(autoGenerate = true)
+    private int playlistID;
+    private String playlistName;
 
     public Playlist(@NonNull String playlistName) {
         this.playlistName = playlistName;
     }
 
+    public int getPlaylistID() {
+        return playlistID;
+    }
+
+    public void setPlaylistID(int playlistID) {
+        this.playlistID = playlistID;
+    }
+
     @NonNull
     public String getPlaylistName() {
         return playlistName;
+    }
+
+    public void setPlaylistName(String playlistName) {
+        this.playlistName = playlistName;
     }
 }

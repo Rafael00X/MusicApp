@@ -27,6 +27,10 @@ public interface SongDao {
 
     @Transaction
     @Query("SELECT * FROM song WHERE songID = :songID")
-    List<SongWithPlaylists> getSongWithPlaylists(int songID);
+    List<SongWithPlaylists> getSongWithPlaylists(long songID);
+
+    @Transaction
+    @Query("SELECT * FROM song")
+    List<Song> getAllSongs();
 
 }

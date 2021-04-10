@@ -5,6 +5,7 @@ import androidx.room.Junction;
 import androidx.room.Relation;
 
 import com.example.myroomapp.entities.Playlist;
+import com.example.myroomapp.entities.PlaylistSongCrossRef;
 import com.example.myroomapp.entities.Song;
 
 import java.util.List;
@@ -15,7 +16,7 @@ public class SongWithPlaylists {
 
     @Relation(
             parentColumn = "songID",
-            entityColumn = "playlistName",
+            entityColumn = "playlistID",
             associateBy = @Junction(PlaylistSongCrossRef.class)
     )
 
