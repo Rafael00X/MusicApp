@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:title="Play"
+        android:id="@+id/artist_play"/>
+    <item android:title="Add To Queue"
+        android:id="@+id/artist_add_to_queue"/>
+</menu>
