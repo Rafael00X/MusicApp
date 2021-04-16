@@ -1,22 +1,32 @@
 package com.example.myroomapp;
 
 import android.Manifest;
+import android.content.DialogInterface;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.content.res.AppCompatResources;
+import androidx.cardview.widget.CardView;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
+import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.myroomapp.entities.Album;
 import com.example.myroomapp.entities.Artist;
 import com.example.myroomapp.entities.Playlist;
+import com.example.myroomapp.entities.Song;
 import com.example.myroomapp.fragments.NavigationDrawerFragment;
 import com.example.myroomapp.fragments.PlayerFragment;
 import com.example.myroomapp.fragments.Song2Fragment;
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.karumi.dexter.Dexter;
 import com.karumi.dexter.PermissionToken;
 import com.karumi.dexter.listener.PermissionDeniedResponse;
@@ -29,7 +39,6 @@ public class MainActivity extends AppCompatActivity {
     ItemViewModel itemViewModel;
     Functions myFunctions;
     Player player;
-    MusicDatabase db;
 
 
     @Override
@@ -47,33 +56,37 @@ public class MainActivity extends AppCompatActivity {
 
                     @Override
                     public void onPermissionGranted(PermissionGrantedResponse permissionGrantedResponse) {
-                        Toast.makeText(MainActivity.this, "Permission received", Toast.LENGTH_SHORT).show();
+                        //Toast.makeText(MainActivity.this, "Permission received", Toast.LENGTH_SHORT).show();
+                        itemViewModel.loadData();
                         player.create(MainActivity.this);
-                        //itemViewModel.loadData();
-
-                        /*
-
-                        db = MusicDatabase.getInstance(MainActivity.this);
-                        ArrayList<Song> songs = myFunctions.fetchSongs(MainActivity.this);
-                        if (songs != null) {
-                            for (Song song : songs) {
-                                db.songDao().insert(song);
-                                db.albumDao().insert(new Album(song.getSongAlbum()));
-                                db.artistDao().insert(new Artist(song.getSongArtist()));
-                            }
-                        }
-
-                         */
-
-
-
 
                         NavigationDrawerFragment navigationDrawerFragment = new NavigationDrawerFragment(MainActivity.this);
                         FragmentManager fragmentManager = getSupportFragmentManager();
                         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
                         fragmentTransaction.add(R.id.main_fragment_container_view, navigationDrawerFragment);
-                        fragmentTransaction.addToBackStack(null);
+                        fragmentTransaction.addToBackStack(Constants.FRAGMENT_NAVIGATION_TAG);
                         fragmentTransaction.commit();
+
+
+                        LinearLayout bottomPlayer_clickArea = findViewById(R.id.bottomPlayer_clickArea);
+                        ImageView bottomPlayer_playpause = findViewById(R.id.bottomPlayer_playpause);
+                        ImageView bottomPlayer_image = findViewById(R.id.bottomPlayer_image);
+                        TextView textView1 = findViewById(R.id.bottomPlayer_textView1);
+                        TextView textView2 = findViewById(R.id.bottomPlayer_textView2);
+                        BottomSheetBehavior<View> bottomSheetBehavior = BottomSheetBehavior.from(findViewById(R.id.bottomPlayer_cardView));
+
+                        bottomPlayer_clickArea.setOnClickListener(v -> itemViewModel.setLoadFragment(Constants.FRAGMENT_PLAYER));
+                        bottomPlayer_playpause.setOnClickListener(v -> itemViewModel.setPlayerTask(Constants.PLAYER_PLAY_PAUSE));
+
+                        // Added
+                        Song song_test = itemViewModel.getCurrentSong();
+                        if (song_test != null) {
+                            textView1.setText(song_test.getSongName());
+                            textView2.setText(song_test.getSongArtist() + " - " + song_test.getSongAlbum());
+                            String task = itemViewModel.getPlayerTask().toString();
+                            if (task.equals(Constants.PLAYER_START) || task.equals(Constants.PLAYER_PLAY))
+                                bottomPlayer_playpause.setImageDrawable(AppCompatResources.getDrawable(MainActivity.this, R.drawable.ic_pause_round));
+                        }
 
 
                         itemViewModel.getLoadFragment().observe(MainActivity.this, s -> {
@@ -90,9 +103,11 @@ public class MainActivity extends AppCompatActivity {
                                             R.anim.fade_out,
                                             R.anim.fade_in,
                                             R.anim.top_to_bottom_exit);
+                                    transaction.setReorderingAllowed(true);
                                     transaction.replace(R.id.main_fragment_container_view, playerFragment);
-                                    transaction.addToBackStack(null);
+                                    transaction.addToBackStack(Constants.FRAGMENT_PLAYER_TAG);
                                     transaction.commit();
+                                    bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
                                     break;
 
                                 case Constants.FRAGMENT_SONG_FROM_ALBUM:
@@ -105,9 +120,9 @@ public class MainActivity extends AppCompatActivity {
                                             R.anim.right_to_left_slide_exit,
                                             R.anim.left_to_right_slide_enter,
                                             R.anim.left_to_right_slide_exit);
-
+                                    transaction.setReorderingAllowed(true);
                                     transaction.replace(R.id.main_fragment_container_view, song2Fragment);
-                                    transaction.addToBackStack(null);
+                                    transaction.addToBackStack(Constants.FRAGMENT_SONG2_TAG);
                                     transaction.commit();
                                     break;
 
@@ -121,8 +136,9 @@ public class MainActivity extends AppCompatActivity {
                                             R.anim.right_to_left_slide_exit,
                                             R.anim.left_to_right_slide_enter,
                                             R.anim.left_to_right_slide_exit);
+                                    transaction.setReorderingAllowed(true);
                                     transaction.replace(R.id.main_fragment_container_view, song2Fragment);
-                                    transaction.addToBackStack(null);
+                                    transaction.addToBackStack(Constants.FRAGMENT_SONG2_TAG);
                                     transaction.commit();
                                     break;
 
@@ -136,8 +152,9 @@ public class MainActivity extends AppCompatActivity {
                                             R.anim.right_to_left_slide_exit,
                                             R.anim.left_to_right_slide_enter,
                                             R.anim.left_to_right_slide_exit);
+                                    transaction.setReorderingAllowed(true);
                                     transaction.replace(R.id.main_fragment_container_view, song2Fragment);
-                                    transaction.addToBackStack(null);
+                                    transaction.addToBackStack(Constants.FRAGMENT_SONG2_TAG);
                                     transaction.commit();
                                     break;
 
@@ -149,6 +166,15 @@ public class MainActivity extends AppCompatActivity {
                                 switch (s) {
                                     case Constants.PLAYER_START:
                                         player.start();
+
+                                        Song song = itemViewModel.getCurrentSong();
+                                        textView1.setText(song.getSongName());
+                                        textView2.setText(song.getSongArtist() + " - " + song.getSongAlbum());
+                                        bottomPlayer_playpause.setImageDrawable(AppCompatResources.getDrawable(MainActivity.this, R.drawable.ic_pause));
+                                        if (song.image != null)
+                                            bottomPlayer_image.setImageBitmap(song.image);
+                                        else
+                                            bottomPlayer_image.setImageDrawable(AppCompatResources.getDrawable(MainActivity.this, R.drawable.music_image));
                                         break;
                                     case Constants.PLAYER_PLAY_PAUSE:
                                         if (player.isPlaying()) itemViewModel.setPlayerTask(Constants.PLAYER_PAUSE);
@@ -157,10 +183,14 @@ public class MainActivity extends AppCompatActivity {
 
                                     case Constants.PLAYER_PLAY:
                                         player.resume();
+
+                                        bottomPlayer_playpause.setImageDrawable(AppCompatResources.getDrawable(MainActivity.this, R.drawable.ic_pause));
                                         break;
 
                                     case Constants.PLAYER_PAUSE:
                                         player.pause();
+
+                                        bottomPlayer_playpause.setImageDrawable(AppCompatResources.getDrawable(MainActivity.this, R.drawable.ic_play));
                                         break;
 
                                     case Constants.PLAYER_NEXT:
@@ -183,6 +213,19 @@ public class MainActivity extends AppCompatActivity {
 
                             }
                         });
+
+                        itemViewModel.getOtherEvents().observe(MainActivity.this, s -> {
+                            switch (s) {
+                                case Constants.NAVIGATION_DRAWER_OPEN:
+                                    bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+                                    break;
+
+                                case Constants.FRAGMENT_PLAYER_CLOSE:
+                                case Constants.NAVIGATION_DRAWER_CLOSE:
+                                    bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+                                    break;
+                            }
+                        });
                     }
 
 
@@ -199,6 +242,29 @@ public class MainActivity extends AppCompatActivity {
                     }
                 })
                 .check();
+    }
+
+    @Override
+    public void onBackPressed() {
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        int index = fragmentManager.getBackStackEntryCount() - 1;
+        if (index == 0) {
+            new AlertDialog.Builder(this)
+                    .setTitle("Exit")
+                    .setMessage("Are you sure you want to exit?")
+                    .setCancelable(false)
+                    .setPositiveButton("YES", (dialog, which) -> {
+                        MainActivity.this.finish();
+                    })
+                    .setNegativeButton("NO", (dialog, which) -> dialog.cancel())
+                    .show();
+        }
+        else {
+            if (fragmentManager.getBackStackEntryAt(index).getName().equals(Constants.FRAGMENT_PLAYER_TAG)) {
+                itemViewModel.setOtherEvents(Constants.FRAGMENT_PLAYER_CLOSE);
+            }
+            fragmentManager.popBackStackImmediate();
+        }
     }
 
     @Override

@@ -13,12 +13,16 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.content.res.AppCompatResources;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.lifecycle.ViewModelStoreOwner;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.myroomapp.ItemViewModel;
+import com.example.myroomapp.MainActivity;
 import com.example.myroomapp.R;
 import com.example.myroomapp.entities.Playlist;
 import com.example.myroomapp.entities.Song;
@@ -53,6 +57,10 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.ViewHolder> {
         Song song = songs.get(position);
         holder.textView1.setText(song.getSongName());
         holder.textView2.setText(song.getSongArtist() + " - " + song.getSongAlbum());
+        if (song.image != null)
+            holder.imageView1.setImageBitmap(song.image);
+        else
+            holder.imageView1.setImageDrawable(AppCompatResources.getDrawable(context, R.drawable.music_image));
         holder.imageView.setOnClickListener(v -> {
             PopupMenu popupMenu = new PopupMenu(holder.imageView.getContext(), holder.imageView);
             popupMenu.inflate(R.menu.song_menu);
@@ -62,9 +70,17 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.ViewHolder> {
                         showPopup(position);
                         break;
                     case R.id.song_delete:
-                        itemViewModel.deleteSong(song);
-                        songs.remove(position);
-                        notifyDataSetChanged();
+                        new AlertDialog.Builder(context)
+                                .setTitle("Delete Song")
+                                .setMessage("Are you sure you want to delete?")
+                                .setCancelable(true)
+                                .setPositiveButton("YES", (dialog, which) -> {
+                                    itemViewModel.deleteSong(song);
+                                    songs.remove(position);
+                                    notifyDataSetChanged();
+                                })
+                                .setNegativeButton("NO", (dialog, which) -> dialog.cancel())
+                                .show();
                         break;
                 }
                 return false;
@@ -80,17 +96,18 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.ViewHolder> {
 
 
     public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
-        ImageView imageView;
+        ImageView imageView1, imageView;
         TextView textView1, textView2;
-        LinearLayout linearLayout;
+        ConstraintLayout constraintLayout;
 
         public ViewHolder(@NonNull View view) {
             super(view);
+            imageView1 = view.findViewById(R.id.imageView1);
             imageView = view.findViewById(R.id.listView_imageView);
             textView1 = view.findViewById(R.id.listView_textView1);
             textView2 = view.findViewById(R.id.listView_textView2);
-            linearLayout = view.findViewById(R.id.listView_clickArea);
-            linearLayout.setOnClickListener(this);
+            constraintLayout = view.findViewById(R.id.listView_clickArea);
+            constraintLayout.setOnClickListener(this);
 
         }
 
@@ -126,8 +143,6 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.ViewHolder> {
         }
 
         Dialog dialog = new Dialog(context);
-        //
-
         dialog.setContentView(R.layout.extra_add_to_playlists);
         ImageView close = dialog.findViewById(R.id.close);
         close.setOnClickListener(v -> {

@@ -1,7 +1,10 @@
 package com.example.myroomapp.entities;
 
+import android.graphics.Bitmap;
+
 import androidx.annotation.NonNull;
 import androidx.room.Entity;
+import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
 
 @Entity
@@ -13,7 +16,9 @@ public class Song {
     private String songArtist;
     private String songLastModified;
     private final String songPath;
-    //private final String songDuration;
+    public String imagePath;
+    @Ignore
+    public Bitmap image;
 
 
     public Song(long songID, String songName, String songAlbum, String songArtist, String songLastModified, @NonNull String songPath) {
