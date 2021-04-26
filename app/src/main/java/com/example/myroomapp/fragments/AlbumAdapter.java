@@ -21,62 +21,6 @@ import com.example.myroomapp.entities.Album;
 import com.google.android.material.imageview.ShapeableImageView;
 
 import java.util.ArrayList;
-/*
-
-public class AlbumAdapter extends RecyclerView.Adapter<AlbumAdapter.ViewHolder> {
-    ArrayList<Album> albums;
-    OnItemClickListener listener;
-
-    public AlbumAdapter(ArrayList<Album> albums, OnItemClickListener listener) {
-        this.albums = albums;
-        this.listener = listener;
-        notifyDataSetChanged();
-    }
-
-    @NonNull
-    @Override
-    public AlbumAdapter.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        LayoutInflater layoutInflater = LayoutInflater.from(parent.getContext());
-        View view = layoutInflater.inflate(R.layout.adapter_layout_listview, parent, false);
-        return new AlbumAdapter.ViewHolder(view);
-    }
-
-    @Override
-    public void onBindViewHolder(@NonNull AlbumAdapter.ViewHolder holder, int position) {
-        Album album = albums.get(position);
-        holder.textView1.setText(album.getAlbumName());
-    }
-
-    @Override
-    public int getItemCount() {
-        return albums.size();
-    }
-
-    public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
-        TextView textView1;
-        LinearLayout linearLayout;
-
-        public ViewHolder(@NonNull View view) {
-            super(view);
-            textView1 = view.findViewById(R.id.listView_textView1);
-            linearLayout = view.findViewById(R.id.listView_clickArea);
-            linearLayout.setOnClickListener(this);
-        }
-
-        @Override
-        public void onClick(View v) {
-            int position = getAdapterPosition();
-            if (position != RecyclerView.NO_POSITION) {
-                listener.onItemClick(albums.get(position));
-            }
-        }
-    }
-
-    public interface OnItemClickListener {
-        void onItemClick(Album album);
-    }
-}
- */
 
 public class AlbumAdapter extends RecyclerView.Adapter<AlbumAdapter.ViewHolder> {
     ArrayList<Album> albums;

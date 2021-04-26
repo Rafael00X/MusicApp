@@ -1,9 +1,14 @@
 package com.example.myroomapp;
 
 import android.Manifest;
-import android.content.DialogInterface;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.os.IBinder;
+import android.renderscript.ScriptGroup;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -13,7 +18,6 @@ import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.content.res.AppCompatResources;
-import androidx.cardview.widget.CardView;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.Observer;
@@ -34,11 +38,30 @@ import com.karumi.dexter.listener.PermissionGrantedResponse;
 import com.karumi.dexter.listener.PermissionRequest;
 import com.karumi.dexter.listener.single.PermissionListener;
 
+import java.util.ArrayList;
+
 
 public class MainActivity extends AppCompatActivity {
+    PlayerService playerService;
     ItemViewModel itemViewModel;
     Functions myFunctions;
-    Player player;
+    private ServiceConnection connection = new ServiceConnection() {
+        public void onServiceConnected(ComponentName className, IBinder service) {
+            playerService = ((PlayerService.PlayerBinder)service).getService();
+        }
+
+        public void onServiceDisconnected(ComponentName className) {
+            playerService = null;
+        }
+    };
+    private boolean serviceIsBound;
+
+    LinearLayout bottomPlayer_clickArea;
+    ImageView bottomPlayer_playpause;
+    ImageView bottomPlayer_image;
+    TextView textView1;
+    TextView textView2;
+    BottomSheetBehavior<View> bottomSheetBehavior;
 
 
     @Override
@@ -47,7 +70,6 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         myFunctions = new Functions();
-        player = new Player();
         itemViewModel = new ViewModelProvider(this).get(ItemViewModel.class);
 
         Dexter.withContext(this)
@@ -56,9 +78,8 @@ public class MainActivity extends AppCompatActivity {
 
                     @Override
                     public void onPermissionGranted(PermissionGrantedResponse permissionGrantedResponse) {
-                        //Toast.makeText(MainActivity.this, "Permission received", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(MainActivity.this, "Permission received", Toast.LENGTH_SHORT).show();
                         itemViewModel.loadData();
-                        player.create(MainActivity.this);
 
                         NavigationDrawerFragment navigationDrawerFragment = new NavigationDrawerFragment(MainActivity.this);
                         FragmentManager fragmentManager = getSupportFragmentManager();
@@ -67,27 +88,15 @@ public class MainActivity extends AppCompatActivity {
                         fragmentTransaction.addToBackStack(Constants.FRAGMENT_NAVIGATION_TAG);
                         fragmentTransaction.commit();
 
-
-                        LinearLayout bottomPlayer_clickArea = findViewById(R.id.bottomPlayer_clickArea);
-                        ImageView bottomPlayer_playpause = findViewById(R.id.bottomPlayer_playpause);
-                        ImageView bottomPlayer_image = findViewById(R.id.bottomPlayer_image);
-                        TextView textView1 = findViewById(R.id.bottomPlayer_textView1);
-                        TextView textView2 = findViewById(R.id.bottomPlayer_textView2);
-                        BottomSheetBehavior<View> bottomSheetBehavior = BottomSheetBehavior.from(findViewById(R.id.bottomPlayer_cardView));
+                        bottomPlayer_clickArea = findViewById(R.id.bottomPlayer_clickArea);
+                        bottomPlayer_playpause = findViewById(R.id.bottomPlayer_playpause);
+                        bottomPlayer_image = findViewById(R.id.bottomPlayer_image);
+                        textView1 = findViewById(R.id.bottomPlayer_textView1);
+                        textView2 = findViewById(R.id.bottomPlayer_textView2);
+                        bottomSheetBehavior = BottomSheetBehavior.from(findViewById(R.id.bottomPlayer_cardView));
 
                         bottomPlayer_clickArea.setOnClickListener(v -> itemViewModel.setLoadFragment(Constants.FRAGMENT_PLAYER));
-                        bottomPlayer_playpause.setOnClickListener(v -> itemViewModel.setPlayerTask(Constants.PLAYER_PLAY_PAUSE));
-
-                        // Added
-                        Song song_test = itemViewModel.getCurrentSong();
-                        if (song_test != null) {
-                            textView1.setText(song_test.getSongName());
-                            textView2.setText(song_test.getSongArtist() + " - " + song_test.getSongAlbum());
-                            String task = itemViewModel.getPlayerTask().toString();
-                            if (task.equals(Constants.PLAYER_START) || task.equals(Constants.PLAYER_PLAY))
-                                bottomPlayer_playpause.setImageDrawable(AppCompatResources.getDrawable(MainActivity.this, R.drawable.ic_pause_round));
-                        }
-
+                        bottomPlayer_playpause.setOnClickListener(v -> PlayerService.setPlayerTask(Constants.PLAYER_PLAY_PAUSE));
 
                         itemViewModel.getLoadFragment().observe(MainActivity.this, s -> {
                             Song2Fragment song2Fragment;
@@ -96,7 +105,7 @@ public class MainActivity extends AppCompatActivity {
                             Drawable drawable;
                             switch (s) {
                                 case Constants.FRAGMENT_PLAYER:
-                                    playerFragment = new PlayerFragment(MainActivity.this, player);
+                                    playerFragment = new PlayerFragment(MainActivity.this, playerService);
                                     transaction = getSupportFragmentManager().beginTransaction();
                                     transaction.setCustomAnimations(
                                             R.anim.bottom_to_top_slide_enter,
@@ -161,57 +170,59 @@ public class MainActivity extends AppCompatActivity {
                             }
                         });
 
-                        itemViewModel.getPlayerTask().observe(MainActivity.this, s -> {
-                            if (player.isFirstSongSelected()) {
-                                switch (s) {
-                                    case Constants.PLAYER_START:
-                                        player.start();
+                        itemViewModel.getQueue().observe(MainActivity.this, s -> {
+                            PlayerService.queue = s;
+                            PlayerService.songPosition = itemViewModel.getSongPosition();
+                            PlayerService.setPlayerTask(Constants.PLAYER_PREPARE);
+                        });
 
-                                        Song song = itemViewModel.getCurrentSong();
-                                        textView1.setText(song.getSongName());
-                                        textView2.setText(song.getSongArtist() + " - " + song.getSongAlbum());
-                                        bottomPlayer_playpause.setImageDrawable(AppCompatResources.getDrawable(MainActivity.this, R.drawable.ic_pause));
-                                        if (song.image != null)
-                                            bottomPlayer_image.setImageBitmap(song.image);
-                                        else
-                                            bottomPlayer_image.setImageDrawable(AppCompatResources.getDrawable(MainActivity.this, R.drawable.music_image));
-                                        break;
-                                    case Constants.PLAYER_PLAY_PAUSE:
-                                        if (player.isPlaying()) itemViewModel.setPlayerTask(Constants.PLAYER_PAUSE);
-                                        else itemViewModel.setPlayerTask(Constants.PLAYER_PLAY);
-                                        break;
+                        itemViewModel.getPlayerBinder().observe(MainActivity.this, playerBinder -> {
+                            playerService = playerBinder.getService();
+                            initializeStickyPlayer(PlayerService.currentSong);
+                            if (PlayerService.isPlaying())
+                                bottomPlayer_playpause.setImageDrawable(AppCompatResources.getDrawable(MainActivity.this, R.drawable.ic_pause));
 
-                                    case Constants.PLAYER_PLAY:
-                                        player.resume();
+                            PlayerService.getPlayerTask().observe(MainActivity.this, s -> {
+                                if (playerService.isFirstSongSelected()) {
+                                    switch (s) {
+                                        case Constants.PLAYER_START:
+                                            Toast.makeText(MainActivity.this, "Start entered", Toast.LENGTH_SHORT).show();
+                                            initializeStickyPlayer(PlayerService.currentSong);
+                                            bottomPlayer_playpause.setImageDrawable(AppCompatResources.getDrawable(MainActivity.this, R.drawable.ic_pause));
+                                            Toast.makeText(MainActivity.this, "Start ended", Toast.LENGTH_SHORT).show();
+                                            break;
 
-                                        bottomPlayer_playpause.setImageDrawable(AppCompatResources.getDrawable(MainActivity.this, R.drawable.ic_pause));
-                                        break;
+                                        case Constants.PLAYER_PLAY_PAUSE:
+                                            //if (playerService.isPlaying()) playerService.setPlayerTask(Constants.PLAYER_PAUSE);
+                                            //else playerService.setPlayerTask(Constants.PLAYER_PLAY);
+                                            break;
 
-                                    case Constants.PLAYER_PAUSE:
-                                        player.pause();
+                                        case Constants.PLAYER_PLAY:
+                                            //player.resume();
 
-                                        bottomPlayer_playpause.setImageDrawable(AppCompatResources.getDrawable(MainActivity.this, R.drawable.ic_play));
-                                        break;
+                                            bottomPlayer_playpause.setImageDrawable(AppCompatResources.getDrawable(MainActivity.this, R.drawable.ic_pause));
+                                            break;
 
-                                    case Constants.PLAYER_NEXT:
-                                        player.next();
-                                        itemViewModel.setPlayerTask(Constants.PLAYER_PREPARE);
-                                        break;
+                                        case Constants.PLAYER_PAUSE:
+                                            //player.pause();
 
-                                    case Constants.PLAYER_PREVIOUS:
-                                        player.previous();
-                                        itemViewModel.setPlayerTask(Constants.PLAYER_PREPARE);
-                                        break;
+                                            bottomPlayer_playpause.setImageDrawable(AppCompatResources.getDrawable(MainActivity.this, R.drawable.ic_play));
+                                            break;
+
+                                        case Constants.PLAYER_NEXT:
+                                            //player.next();
+                                            //playerService.setPlayerTask(Constants.PLAYER_PREPARE);
+                                            break;
+
+                                        case Constants.PLAYER_PREVIOUS:
+                                            //player.previous();
+                                            //playerService.setPlayerTask(Constants.PLAYER_PREPARE);
+                                            break;
+                                    }
                                 }
-                            }
 
-                            if (s.equals(Constants.PLAYER_PREPARE)) {
-                                // TODO - prevent redundant reload
-                                player.setQueue(itemViewModel.getQueue());
-                                player.setSongPosition(itemViewModel.getSongPosition());
-                                player.prepare();
+                            });
 
-                            }
                         });
 
                         itemViewModel.getOtherEvents().observe(MainActivity.this, s -> {
@@ -226,6 +237,9 @@ public class MainActivity extends AppCompatActivity {
                                     break;
                             }
                         });
+
+                        startService(new Intent(MainActivity.this, PlayerService.class));
+                        doBindService();
                     }
 
 
@@ -242,6 +256,31 @@ public class MainActivity extends AppCompatActivity {
                     }
                 })
                 .check();
+    }
+
+    void doBindService() {
+        bindService(new Intent(this, PlayerService.class),
+                itemViewModel.connection,
+                Context.BIND_AUTO_CREATE);
+        serviceIsBound = true;
+    }
+
+    void doUnbindService() {
+        if (serviceIsBound) {
+            unbindService(connection);
+            serviceIsBound = false;
+        }
+    }
+
+    private void initializeStickyPlayer(Song song) {
+        if (song != null) {
+            textView1.setText(song.getSongName());
+            textView2.setText(song.getSongArtist() + " - " + song.getSongAlbum());
+            if (song.image != null)
+                bottomPlayer_image.setImageBitmap(song.image);
+            else
+                bottomPlayer_image.setImageDrawable(AppCompatResources.getDrawable(MainActivity.this, R.drawable.music_image));
+        }
     }
 
     @Override
@@ -269,8 +308,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
-        player.destroy();
-        player = null;
+        doUnbindService();
         super.onDestroy();
     }
 }

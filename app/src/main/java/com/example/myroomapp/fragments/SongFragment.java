@@ -51,9 +51,9 @@ public class SongFragment extends Fragment implements SongAdapter.OnItemClickLis
 
     @Override
     public void onItemClick(ArrayList<Song> songs, int position) {
-        itemViewModel.setQueue(songs);
         itemViewModel.setSongPosition(position);
-        itemViewModel.setPlayerTask(Constants.PLAYER_PREPARE);
+        itemViewModel.setQueue(songs);
+        //itemViewModel.setPlayerTask(Constants.PLAYER_PREPARE);
     }
 }
 

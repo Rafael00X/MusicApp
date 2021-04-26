@@ -8,26 +8,21 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.content.res.AppCompatResources;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.LifecycleOwner;
-import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.lifecycle.ViewModelStoreOwner;
 
 import com.example.myroomapp.Constants;
 import com.example.myroomapp.ItemViewModel;
-import com.example.myroomapp.MainActivity;
-import com.example.myroomapp.Player;
+import com.example.myroomapp.PlayerService;
 import com.example.myroomapp.R;
 import com.example.myroomapp.entities.Song;
 
-import java.util.ArrayList;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -37,11 +32,11 @@ public class PlayerFragment extends Fragment {
     ImageView playpause, next, previous, image, menu;
     TextView textView1, textView2, curr_time, max_time;
     ItemViewModel itemViewModel;
-    Player player;
+    PlayerService player;
     ExecutorService executor;
     Context context;
 
-    public PlayerFragment(Context context, Player player) {
+    public PlayerFragment(Context context, PlayerService player) {
         this.context = context;
         this.player = player;
     }
@@ -65,23 +60,23 @@ public class PlayerFragment extends Fragment {
         curr_time = view.findViewById(R.id.player_current_time);
         max_time = view.findViewById(R.id.player_maximum_time);
 
-        playpause.setOnClickListener(v -> itemViewModel.setPlayerTask(Constants.PLAYER_PLAY_PAUSE));
-        next.setOnClickListener(v -> itemViewModel.setPlayerTask(Constants.PLAYER_NEXT));
-        previous.setOnClickListener(v -> itemViewModel.setPlayerTask(Constants.PLAYER_PREVIOUS));
+        playpause.setOnClickListener(v -> PlayerService.setPlayerTask(Constants.PLAYER_PLAY_PAUSE));
+        next.setOnClickListener(v -> PlayerService.setPlayerTask(Constants.PLAYER_NEXT));
+        previous.setOnClickListener(v -> PlayerService.setPlayerTask(Constants.PLAYER_PREVIOUS));
 
         seekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             boolean is_playing;
 
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                if (player.isFirstSongSelected()) {
+                if (PlayerService.currentSong != null) {
                     curr_time.setText(getTime(progress));
                 }
             }
 
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {
-                if (player.isFirstSongSelected()) {
+                if (PlayerService.currentSong != null) {
                     is_playing = player.isPlaying();
                     player.pause();
                 }
@@ -89,7 +84,7 @@ public class PlayerFragment extends Fragment {
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
-                if (player.isFirstSongSelected()) {
+                if (PlayerService.currentSong != null) {
                     player.setCurrentPosition(seekBar.getProgress());
                     if (is_playing) {
                         player.resume();
@@ -98,31 +93,14 @@ public class PlayerFragment extends Fragment {
             }
         });
 
-        // Added
-        Song song_test = itemViewModel.getCurrentSong();
-        if (song_test != null) {
-            textView1.setText(song_test.getSongName());
-            textView2.setText(song_test.getSongArtist() + " - " + song_test.getSongAlbum());
-            seekbar.setMax(player.getDuration());
-            max_time.setText(getTime(player.getDuration()));
-            if (player.isPlaying())
-            playpause.setImageDrawable(AppCompatResources.getDrawable(context, R.drawable.ic_pause_round));
-        }
+        initialize(PlayerService.currentSong);
 
-        itemViewModel.getPlayerTask().observe((LifecycleOwner) context, s -> {
+        PlayerService.getPlayerTask().observe((LifecycleOwner) context, s -> {
             switch (s) {
                 case Constants.PLAYER_START:
-                    Song song = itemViewModel.getCurrentSong();
-                    textView1.setText(song.getSongName());
-                    textView2.setText(song.getSongArtist() + " - " + song.getSongAlbum());
-                    seekbar.setMax(player.getDuration());
-                    max_time.setText(getTime(player.getDuration()));
-                    playpause.setImageDrawable(AppCompatResources.getDrawable(context, R.drawable.ic_pause_round));
-                    if (song.image != null)
-                        image.setImageBitmap(song.image);
-                    else
-                        image.setImageDrawable(AppCompatResources.getDrawable(context, R.drawable.music_image));
+                    initialize(PlayerService.currentSong);
                     break;
+
                 case Constants.PLAYER_PLAY:
                     playpause.setImageDrawable(AppCompatResources.getDrawable(context, R.drawable.ic_pause_round));
                     break;
@@ -173,5 +151,20 @@ public class PlayerFragment extends Fragment {
                 }
             }
         });
+    }
+
+    private void initialize(Song song) {
+        if (song != null) {
+            textView1.setText(song.getSongName());
+            textView2.setText(song.getSongArtist() + " - " + song.getSongAlbum());
+            seekbar.setMax(PlayerService.getDuration());
+            max_time.setText(getTime(PlayerService.getDuration()));
+            if (PlayerService.isPlaying())
+                playpause.setImageDrawable(AppCompatResources.getDrawable(context, R.drawable.ic_pause_round));
+            if (song.image != null)
+                image.setImageBitmap(song.image);
+            else
+                image.setImageDrawable(AppCompatResources.getDrawable(context, R.drawable.music_image));
+        }
     }
 }

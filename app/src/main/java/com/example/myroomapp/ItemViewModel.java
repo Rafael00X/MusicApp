@@ -1,11 +1,15 @@
 package com.example.myroomapp;
 
 import android.app.Application;
+import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.ServiceConnection;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.os.Binder;
+import android.os.IBinder;
 import android.provider.MediaStore;
 import android.widget.Toast;
 
@@ -33,7 +37,23 @@ public class ItemViewModel extends AndroidViewModel {
     public static final ArrayList<Album> allAlbums = new ArrayList<>();
     public static final ArrayList<Artist> allArtists = new ArrayList<>();
     public static final ArrayList<Playlist> allPlaylists = new ArrayList<>();
-    //private final ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+    private final MutableLiveData<PlayerService.PlayerBinder> playerBinder = new MutableLiveData<>();
+    public void setPlayerBinder(PlayerService.PlayerBinder binder) {
+        playerBinder.setValue(binder);
+    }
+    public LiveData<PlayerService.PlayerBinder> getPlayerBinder() {
+        return playerBinder;
+    }
+    public final ServiceConnection connection = new ServiceConnection() {
+        public void onServiceConnected(ComponentName className, IBinder service) {
+            playerBinder.postValue((PlayerService.PlayerBinder) service);
+        }
+
+        public void onServiceDisconnected(ComponentName className) {
+            playerBinder.postValue(null);
+        }
+    };
+    private boolean serviceIsBound;
 
     public ItemViewModel(@NonNull Application application) {
         super(application);
@@ -241,12 +261,11 @@ public class ItemViewModel extends AndroidViewModel {
         return otherEvents;
     }
 
-
-    private ArrayList<Song> queue = null;
+    private final MutableLiveData<ArrayList<Song>> queue = new MutableLiveData<>();
     public void setQueue(ArrayList<Song> queue) {
-        this.queue = queue;
+        this.queue.setValue(queue);
     }
-    public ArrayList<Song> getQueue() {
+    public LiveData<ArrayList<Song>> getQueue() {
         return queue;
     }
 

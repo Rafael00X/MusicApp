@@ -3,6 +3,7 @@
     package="com.example.myroomapp">
 
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-feature android:name="android.hardware.screen.portrait" />
 
     <application
@@ -14,6 +15,8 @@
         android:supportsRtl="true"
         android:theme="@style/LightTheme"
         android:screenOrientation="portrait" >
+        <service android:name=".PlayerService"/>
+        <receiver android:name=".PlayerService$NotificationReceiver"/>
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
