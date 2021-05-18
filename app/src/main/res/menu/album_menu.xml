@@ -3,5 +3,5 @@
     <item android:title="Play"
         android:id="@+id/album_play"/>
     <item android:title="Add To Queue"
-        android:id="@+id/album_add_to_queue"/>
+        android:id="@+id/album_addToQueue"/>
 </menu>

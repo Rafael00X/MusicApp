@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">MyRoomApp</string>
+    <string name="app_name">Music Player</string>
     <string name="open">open</string>
     <string name="close">close</string>
     <string name="blank">----</string>

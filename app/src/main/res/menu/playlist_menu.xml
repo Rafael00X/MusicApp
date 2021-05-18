@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:title="Play"
+        android:id="@+id/playlist_play"/>
+    <item android:title="Add To Queue"
+        android:id="@+id/playlist_addToQueue"/>
+    <item android:title="Rename"
+        android:id="@+id/playlist_rename"/>
     <item android:title="Delete"
         android:id="@+id/playlist_delete"/>
 </menu>

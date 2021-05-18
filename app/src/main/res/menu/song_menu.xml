@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:title="Play"
+        android:id="@+id/song_play"/>
+    <item android:title="Add To Queue"
+        android:id="@+id/song_addToQueue"/>
     <item android:title="Add To Playlist"
         android:id="@+id/song_addToPlaylist"/>
     <item android:title="Delete"

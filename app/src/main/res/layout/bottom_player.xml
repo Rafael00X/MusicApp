@@ -42,7 +42,8 @@
                 android:paddingStart="15dp"
                 android:paddingEnd="15dp"
                 android:text="@string/blank"
-                android:textColor="?attr/bigTextColor"
+                android:textColor="@color/yellow_500"
+                android:textStyle="bold"
                 android:textSize="15sp" />
 
             <TextView
@@ -68,6 +69,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
+        app:tint="@color/black"
         app:srcCompat="@drawable/ic_play" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
